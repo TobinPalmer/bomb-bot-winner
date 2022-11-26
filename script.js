@@ -7,46 +7,12 @@ const input = nodeRoot.querySelector('input.styled');
 const inputWrapper = nodeRoot.querySelector('.selfTurn');
 
 const usedWords = [];
-const blacklistWords = [
-  'ethylenediaminetetraacetates',
-  'ethylenediaminetetraacetate',
-  'ethylenediaminetetraacetate',
-  'electroencephalographer',
-  'electroencephalographic',
-  'electroencephalography',
-  'electroencephalograph',
-  'electroencephalograms',
-  'electroencephalogram',
-  'electroencephalograph',
-  'electroencephalographically',
-  'deinstitutionalizations',
-  'countercountermeasures',
-  'countercountermeasure',
-  'immunoelectrophoretically',
-  'intersubstitutabilities',
-  'intersubstitutability',
-  'deinstitutionalization',
-  'chlorofluoromethanes',
-  'overintellectualizations',
-  'xiphihumeralis',
-  'zoocytium',
-  'xiphiplastrals',
-  'stilpnosiderite',
-  'stilpnosiderites',
-  'worcesterberry',
-  'worcesterberries',
-  'ycleepes',
-  'wyliecoat',
-  'yfere',
-  'zamzawed',
-  'xenophobically ',
-];
 
-async function getWords() {
+const getWords = async () => {
   return await fetch(
     'https://raw.githubusercontent.com/lorenbrichter/Words/master/Words/en.txt'
   );
-}
+};
 
 const wordArray = getWords().then(async response => {
   const text = await response.text();
@@ -67,34 +33,6 @@ const getPromptText = () => {
   return prompt.textContent;
 };
 
-let index = 0;
-const typeWord = word => {
-  input.value = '';
-  console.log('typing word', word);
-
-  window.next_letter = () => {
-    if (index <= word.length && !inputWrapper.hasAttribute('hidden')) {
-      input.value = word.substring(-1, index++);
-      setTimeout('next_letter()', Math.random() * speedVal);
-    }
-
-    // if (index > word.length) {
-    //   console.log(usedWords);
-    // }
-  };
-
-  if (!inputWrapper.hasAttribute('hidden')) {
-    console.log('NEXT LETTER');
-
-    setTimeout(() => {
-      next_letter();
-    }, 0);
-  } else {
-    console.log('input is hidden');
-    input.value = '';
-  }
-};
-
 async function getLongestWord() {
   console.log('getting longest word');
 
@@ -104,11 +42,7 @@ async function getLongestWord() {
       const wordPrompt = getPromptText();
       words.forEach(word => {
         if (word.includes(wordPrompt)) {
-          if (
-            /*word.length > longestWord.length */
-            !usedWords.includes(word) &&
-            !blacklistWords.includes(word)
-          )
+          if (word.length > longestWord.length && !usedWords.includes(word))
             longestWord = word;
         }
       });
@@ -116,17 +50,31 @@ async function getLongestWord() {
         console.log('longest word', longestWord);
 
         if (!inputWrapper.hasAttribute('hidden')) {
+          /* typeWord(longestWord) */
           input.value = longestWord;
-          const keyboardEvent = new KeyboardEvent('keydown', {
-            code: 'Enter',
-            key: 'Enter',
-            charCode: 13,
-            keyCode: 13,
-            view: window,
-            bubbles: true,
-          });
-          inputWrapper.querySelector('form').dispatchEvent(keyboardEvent);
-          /* typeWord(longestWord) */ usedWords.push(longestWord);
+          usedWords.push(longestWord);
+          /* nodeRoot.querySelector('.selfTurn form').submit(); */
+
+          const word = input.value.trim();
+          if (word.length > 0) socket.emit('setWord', word, true);
+
+          /*
+          // input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+          // input.dispatchEvent(
+          //   new SubmitEvent('submit', { submitter: formTrigger })
+          // );
+
+          */
+
+          setTimeout(() => {
+            if (
+              !inputWrapper.hasAttribute('hidden') &&
+              input.value.trim() === ''
+            ) {
+              console.log('Input is not valid imo, getting a new word');
+              input.value = getLongestWord();
+            }
+          }, 100);
         }
       }
     })
