@@ -1,7 +1,7 @@
-const speedVal = 0;
 const nodeRoot = document
   .querySelector('div')
   .nextElementSibling.querySelector('iframe').contentWindow.document;
+
 const prompt = nodeRoot.querySelector('.syllable');
 const input = nodeRoot.querySelector('input.styled');
 const inputWrapper = nodeRoot.querySelector('.selfTurn');
@@ -33,7 +33,7 @@ const getPromptText = () => {
   return prompt.textContent;
 };
 
-async function getLongestWord() {
+const getLongestWord = async () => {
   console.log('getting longest word');
 
   return await wordArray
@@ -50,28 +50,16 @@ async function getLongestWord() {
         console.log('longest word', longestWord);
 
         if (!inputWrapper.hasAttribute('hidden')) {
-          /* typeWord(longestWord) */
           input.value = longestWord;
           usedWords.push(longestWord);
-          /* nodeRoot.querySelector('.selfTurn form').submit(); */
 
           const word = input.value.trim();
           if (word.length > 0) socket.emit('setWord', word, true);
-
-          /*
-          // input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-          // input.dispatchEvent(
-          //   new SubmitEvent('submit', { submitter: formTrigger })
-          // );
-
-          */
-
           setTimeout(() => {
             if (
               !inputWrapper.hasAttribute('hidden') &&
               input.value.trim() === ''
             ) {
-              console.log('Input is not valid imo, getting a new word');
               input.value = getLongestWord();
             }
           }, 100);
@@ -79,7 +67,7 @@ async function getLongestWord() {
       }
     })
     .catch(err => console.log(err));
-}
+};
 
 const observerConfig = {
   childList: true,
@@ -91,13 +79,10 @@ const observerConfig = {
 const promptWrapper = nodeRoot.querySelector('.round');
 const promptObserver = new MutationObserver(() => {
   getLongestWord();
-  console.log(getPromptText(), 'PROMPT TEXT');
 });
 
 const inputObserver = new MutationObserver(() => {
-  return inputWrapper.hasAttribute('hidden')
-    ? console.log('input is hidden')
-    : (console.log('input is visible getting longest word'), getLongestWord());
+  return inputWrapper.hasAttribute('hidden') ? '' : getLongestWord();
 });
 
 if (promptWrapper && prompt) {
